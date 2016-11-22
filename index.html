@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BinOpt</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <script src="js/sha1.js" defer></script>
+    <script src="js/app.js" defer></script>
+</head>
+<body>
+    
+    <div id="modal">
+        <div id="loginForm">
+            <input id="username" type="text" placeholder="User name" />
+            <input id="password" type="password" placeholder="Password" />
+            <button id="login">Sign in</button>
+        </div>
+    </div>
+    <div id="settings">
+        <fieldset>
+            <legend>General</legend>
+            <div>
+                <span class="generalLabel">
+                    <label>Mode:</label>
+                </span>
+                <input id="manual" type="radio" name="mode" checked/> <label for="manual">Manual</label>
+                <input id="auto" type="radio" name="mode"/> <label for="auto">Automatic</label>
+            </div>
+            <div>
+
+                <span class="generalLabel">
+                    <label>Calculation formula:</label>
+                </span>
+                <input id="calcAsk" type="radio" name="calc"/> <label for="calcAsk">Ask</label>
+                <input id="calcBid" type="radio" name="calc"/> <label for="calcBid">Bid</label>
+                <input id="calcAskBid" type="radio" name="calc" checked/> <label for="calcAskBid">(Ask+Bid)/2</label>
+            </div>
+
+            <legend>Autotrading</legend>
+            <label>Strategy<select id="strategy"></select></label><br/>
+            <label>the time interval over which starts tracking jumps</label><input type="number" min="0" id="pause"/>
+            <div class="stopTrade">
+                <label>Stop trading if:</label><br/>
+                <label>the balance decrease by<input type="number" min="0" id="balanceDecrease"/></label><br/>
+                <label>the balance increase by<input type="number" min="0" id="balanceIncrease"/></label><br/>
+                <label>winning percentage less<input type="number" min="0" id="percentBelow"/></label><br/>
+                <label>the number of losses bets in a row</label><input type="number" min="0" id="lossesInRow"/><br/>
+            </div>
+            <input type="checkbox" id="sameTrend"/><label>In case of loss set the trend in the previous bet</label>
+            <div>
+                <div>
+                    <button id="addRow">+</button>
+                    <button id="delRow">-</button>
+                </div>
+                <table id="schedule" border="1" cellspacing="0" cellpadding="5">
+                    <tr>
+                        <th>From</th>
+                        <th>To</th>
+                    </tr>
+                </table>
+            </div>
+        </fieldset>
+
+    </div>
+    <div id="wrapper" class="test">
+        <select id="broker" title="Broker"></select>
+        <select id="currency" title="Currency pair"></select>
+        <select id="trend" title="Trend">
+            <option></option>
+            <option>Call</option>
+            <option>Put</option>
+        </select>
+        <input type="number" id="difference" min="1" placeholder="Pips" />
+        <button id="start">Start</button>
+       <img id="set" src="pict/set.png" >
+    </div>
+        <webview id="platform" src="" autosize ="on"></webview>
+</body>
+</html>

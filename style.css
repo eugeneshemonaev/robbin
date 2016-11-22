@@ -1,0 +1,113 @@
+﻿@charset "utf-8";
+/*general*/
+
+button, input[type=number], select {
+    border-radius: 5px;
+    background-color: white;
+    color: rgb(165,165,165);
+    padding: 5px;
+    width: 140px;
+    margin-left: 2px;
+    font-size: large;
+    border: 2px solid rgb(200,200,200);
+    font-family: "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", "DejaVu Sans", Verdana, sans-serif;
+    -webkit-box-sizing: border-box;
+    line-height: 30px;
+}
+button:active, img:active{
+    border:inset;
+}
+
+*:focus {
+    outline: none;
+}
+
+#wrapper {
+    text-align: center;
+    /*background-color:rgb(240, 240, 240);*/
+    /*padding: 10px;*/
+}
+
+#platform {
+    border-top: 2px solid rgb(200,200,200);
+    border-bottom: 2px solid rgb(200,200,200);
+    margin-top: 10px;
+    padding: 5px;
+    width: 100%;
+    height: 90vh;
+    display: flex;
+}
+
+#set {
+    position:absolute;
+    right:15px;
+    top:15px;
+    width: 30px;
+    height: 30px;
+}
+
+/*autorization*/
+#loginForm input {
+    border: none;
+    border-bottom: 2px solid rgb(200,200,200);
+    font-size: large;
+    color: rgb(165,165,165);
+    margin-bottom: 10px;
+}
+
+#loginForm * {
+    display: block;
+    margin: 5px auto;
+    padding: 5px;
+    text-align: center;
+}
+
+#modal {
+    /*display:none;*/
+    background-color: white;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+
+#loginForm {
+    padding: 20%;
+}
+
+/*settings*/
+
+#settings label, legend {
+    font-size: large;
+    /*padding: 0 15px;*/
+}
+
+#settings {
+    display: none;
+    background-color: white;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    
+}
+
+.generalLabel {
+    display: inline-block;
+    width: 150px;
+}
+
+fieldset {
+    padding: 10px 20px;
+    width: 33%;
+    border-radius: 5px;
+    border: 2px solid rgb(200, 200, 200);
+    margin:10px;
+}
+
+#settings input[type=number] {
+    font-size: medium;
+    padding: 2px;
+    width: 50px;
+    border-radius: 5px;
+    border: 1px solid rgb(200, 200, 200);
+    margin: 2px 5px;
+}

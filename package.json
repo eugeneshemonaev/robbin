@@ -1,0 +1,12 @@
+{
+  "name": "BinOpt",
+  "version": "3.1.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-packager . myApp --platform=win32 --arch=x64 --version=1.4.5 --app-version=0.1.0 --out=dist --ignore=dist --prune"
+  },
+  "author": "Eugenerator",
+  "license": "ISC"
+}
