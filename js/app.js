@@ -3,13 +3,6 @@ var menu, platform, settings, trading, autoTrading;
 main();
 
 function main() {
-    //menu = new Menu();
-    //platform = new Platform();
-    //platform.findPlatformElement();
-    //settings = new Settings();
-    //trading = new Trading();
-    //document.getElementById("start").addEventListener("click", trading.clickButton.bind(trading), false);
-    //autoTrading = new Autotrading();
     user = new User();
 }
 function Trading() {
@@ -29,12 +22,12 @@ function Trading() {
             platform.getData(this.makeBet);
         else
             platform.getData(autoTrading.start);
-    }
+    };
     this.stop = function () {
         this.worker.terminate();
         if (settings.mode == "auto")
             autoTrading.setdefaultValues();
-    }
+    };
     this.clickButton = function () {
         if (this.inProcess) {
             this.stop();
@@ -48,7 +41,7 @@ function Trading() {
                     this.start();
             }.bind(this))
         }
-    }
+    };
     this.makeBet = function () {
         trading.worker.postMessage({
             "user":user,
@@ -75,15 +68,6 @@ function Trading() {
                 trading.button.disabled = true;
             }
             else if (event.data == "pauseOver") {
-                //trading.bet.finish();
-                //trading.button.disabled = false;
-                //if (settings.mode == "auto")
-                //    platform.getData(autoTrading.continue);
-                //else {
-                //    trading.stop();
-                //    trading.button.textContent = "Start";
-                //    trading.inProcess = false;
-                //}
                 trading.bet.finish();
                 trading.button.disabled = false;
                 if (settings.mode == "manual"){
@@ -106,50 +90,37 @@ function Platform(userName) {
             for (var i = 0; i < list.length; i++)
                 this.scripts[list[i].name] = list[i].value;
         }.bind(this));
-    }
+    };
     this.findPlatformElement = function () {
         this.wv = document.getElementById("platform");
-    }
+    };
     this.refresh = function (broker) {
         if (broker != undefined) {
             this.wv.src = broker.value;
             this.getScripts("http://138.201.88.244/binopt/hs/v1/list/script?user=" + user.userName + "&sessionID=" + user.sessionID + "&broker=" + broker.textContent);
         }
-    }
+    };
     this.getData = function (callback) {
         this.callback = callback;
         this.data = {};
-
-        function executeScript(script) {
-            return new Promise(function (resolve, reject) {
-                platform.wv.executeJavaScript(script, false,function (arr) {
-                    resolve(arr);
-                });
-            });
-        }
-        executeScript(this.scripts.getBalance).then(res=> {
-            platform.data.balance = res;
-            return executeScript(this.scripts.getBetSize);
-        }).then(res=> {
-            platform.data.betSize = res;
-            return executeScript(this.scripts.getPercent);
-        }).then(res=> {
-            platform.data.percent = res;
-            return executeScript(this.scripts.getDealTime);
-        }).then(res=> {
-            platform.data.dealTime = res;
-            platform.callback();
-        });
-    }
+        this.wv.executeJavaScript(this.scripts.getData, false,function (res) {
+            this.data = JSON.parse(res);
+            if(this.data.balance == this.data.betSize){
+                this.getData(callback);
+                return;
+            }
+            this.callback();
+        }.bind(this));
+    };
     this.call = function () {
         this.wv.executeJavaScript(this.scripts.callButtonClick);
-    }
+    };
     this.put = function () {
         this.wv.executeJavaScript(this.scripts.putButtonClick);
-    }
+    };
     this.setBetSize = function (betSize) {
         this.wv.executeJavaScript(betSize + this.scripts.setBetSize);
-    }
+    };
 }
 function Settings(userName) {
     this.mode;
@@ -165,40 +136,39 @@ function Settings(userName) {
     function bind() {
 
         var arr = document.querySelectorAll("input[name = calc]");
-        for (i = 0; i < arr.length; i++) {
+        for (i = 0; i < arr.length; i++)
             arr[i].onchange = function () {
                 if (this.checked)
                     settings.calcFormula = this.id;
             }
-        };
 
         var arr = document.querySelectorAll("input[name = mode]");
-        for (i = 0; i < arr.length; i++) {
+        for (i = 0; i < arr.length; i++)
             arr[i].onchange = function () {
                 if (this.checked)
                     settings.mode = this.id;
             }
-        };
 
         document.getElementById("pause").onchange = function () {
             settings.pause = +this.value;
-        }
+        };
         document.getElementById("balanceDecrease").onchange = function () {
             settings.balanceDecrease = +this.value;
-        }
+        };
         document.getElementById("balanceIncrease").onchange = function () {
             settings.balanceIncrease = +this.value;
-        }
+        };
         document.getElementById("percentBelow").onchange = function () {
             settings.percentBelow = +this.value;
-        }
+        };
         document.getElementById("lossesInRow").onchange = function () {
             settings.lossesInRow = +this.value;
-        }
+        };
         document.getElementById("sameTrend").onchange = function () {
             settings.sameTrend = this.checked;
-        }
-    }; bind();
+        };
+    }
+    bind();
     this.refresh = function () {
         var arr = document.querySelectorAll("#settings *");
         for (i = 0; i < arr.length; i++) {
@@ -206,14 +176,14 @@ function Settings(userName) {
             evt.initEvent("change", true, false);
             arr[i].dispatchEvent(evt);
         }
-    }
+    };
     document.getElementById("set").addEventListener("click", function () {
         var style = document.getElementById("settings").style;
         if (style.display == "block")
             style.display = "none";
         else
             style.display = "block"
-    })
+    });
     xhr("GET", "http://138.201.88.244/binopt/hs/v1/list/strategy?user=" + user.userName + "&sessionID=" + user.sessionID + "&broker=", function (list) {
         fillList(list, document.getElementById("strategy"), this);
     }.bind(this));
@@ -221,7 +191,7 @@ function Settings(userName) {
         for (var i = 0; i < this.bettingStrategies.length; i++)
             if (this.bettingStrategies[i].name == document.getElementById("strategy").value)
                 return this.bettingStrategies[i].value;
-    }
+    };
     this.setList = function (list) {
         this.bettingStrategies = list;
     }
@@ -270,16 +240,16 @@ function Menu(userName) {
             menu.broker = this.value;
             if (platform)
                 platform.refresh(this);
-        }
+        };
         document.getElementById("currency").onchange = function () {
             menu.currency = this.value;
-        }
+        };
         document.getElementById("trend").onchange = function () {
             menu.trend = this.textContent;
-        }
+        };
         document.getElementById("difference").onchange = function () {
             menu.difference = this.value;
-        }
+        };
     }
     bind();
     fill();
@@ -326,7 +296,7 @@ function Autotrading() {
         }
         autoTrading.data.balanceBeforeBet = platform.data.balance;
         trading.makeBet();
-    }
+    };
     this.continue = function () {
         autoTrading.data.balanceAfterBet = platform.data.balance;
 
@@ -361,18 +331,18 @@ function Autotrading() {
             }
         }
         platform.getData(autoTrading.start);
-    }
+    };
     this.finish = function () {
         this.setdefaultValues();
         trading.stop();
         trading.button.textContent = "Start";
         trading.inProcess = false;
-    }
+    };
     this.setdefaultValues = function () {
         this.data.startingBalance = this.data.startingBetSize = this.data.lostBets = this.data.sumOfBets = this.data.balanceBeforeBet = this.data.balanceAfterBet = this.data.newBetSize = 0;
         this.trend = undefined;
         this.firstTime = true;
-    }
+    };
     function calculateBetSize() {
         var code = settings.getStrategy();
         return code.replace("sumOfBets", autoTrading.data.sumOfBets).replace("percent", platform.data.percent).replace("startingBetSize", autoTrading.data.startingBetSize);
@@ -395,13 +365,13 @@ function Table(id) {
             cell.appendChild(inp);
         }
         this.currentRow++;
-    }
+    };
     this.delete = function () {
         if (this.currentRow >= 1) {
             document.querySelector("table").deleteRow(this.currentRow);
             this.currentRow--;
         }
-    }
+    };
     this.getRow = function (cells) {
 
         var row = {};
@@ -412,7 +382,7 @@ function Table(id) {
             row[this.headers[i]] = data.value;
         }
         return row;
-    }
+    };
     document.getElementById("addRow").addEventListener("click", this.add.bind(this), false);
     document.getElementById("delRow").addEventListener("click", this.delete.bind(this), false);
 }
