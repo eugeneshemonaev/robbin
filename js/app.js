@@ -1,5 +1,3 @@
-var menu, platform, settings, trading, autoTrading;
-
 main();
 
 function main() {
@@ -36,20 +34,20 @@ function Trading() {
         }
         else {
             xhr("GET", "http://138.201.88.244/binopt/hs/v1/val/sessionID?user=" + user.userName + "&sessionID=" + user.sessionID + "&param=" + user.userName, function (obj) {
-                    this.inProcess = true;
-                    this.button.textContent = "Stop";
-                    this.start();
+                this.inProcess = true;
+                this.button.textContent = "Stop";
+                this.start();
             }.bind(this))
         }
     };
     this.makeBet = function () {
         trading.worker.postMessage({
-            "user":user,
+            "user": user,
             "cur": menu.currency,
             "diff": +menu.difference,
             "trend": menu.trend,
             "mode": settings.mode,
-            "pause": (platform.data.dealTime*60+settings.pause+10)*1000
+            "pause": (platform.data.dealTime * 60 + settings.pause + 10) * 1000
         });
 
         trading.worker.onmessage = function (event) {
@@ -70,8 +68,8 @@ function Trading() {
             else if (event.data == "pauseOver") {
                 trading.bet.finish();
                 trading.button.disabled = false;
-                if (settings.mode == "manual"){
-                   trading.stop();
+                if (settings.mode == "manual") {
+                    trading.stop();
                     trading.button.textContent = "Start";
                     trading.inProcess = false;
                 }
@@ -79,38 +77,32 @@ function Trading() {
         }
     }
 }
-function Platform(userName) {
-    this.wv;
-    this.scripts;
-    this.data;
-    this.callback;
-    this.getScripts = function (url) {
-        platform.scripts = {};
-        xhr("GET", url, function (list) {
+function Platform() {
+    this.wv = document.getElementById("platform");
+    this.getScripts = url => {
+        this.scripts = {};
+        xhr("GET", url, list => {
             for (var i = 0; i < list.length; i++)
                 this.scripts[list[i].name] = list[i].value;
-        }.bind(this));
-    };
-    this.findPlatformElement = function () {
-        this.wv = document.getElementById("platform");
+        });
     };
     this.refresh = function (broker) {
         if (broker != undefined) {
             this.wv.src = broker.value;
-            this.getScripts("http://138.201.88.244/binopt/hs/v1/list/script?user=" + user.userName + "&sessionID=" + user.sessionID + "&broker=" + broker.textContent);
+            var url = "http://138.201.88.244/binopt/hs/v1/list/script?user=" + user.userName + "&sessionID=" + user.sessionID + "&broker=" + broker.textContent;
+            this.getScripts(url);
         }
     };
-    this.getData = function (callback) {
-        this.callback = callback;
+    this.getData = callback => {
         this.data = {};
-        this.wv.executeJavaScript(this.scripts.getData, false,function (res) {
+        this.wv.executeJavaScript(this.scripts.getData, false, res => {
             this.data = JSON.parse(res);
-            if(this.data.balance == this.data.betSize){
+            if (this.data.balance == this.data.betSize) {
                 this.getData(callback);
                 return;
             }
-            this.callback();
-        }.bind(this));
+            callback();
+        });
     };
     this.call = function () {
         this.wv.executeJavaScript(this.scripts.callButtonClick);
@@ -122,59 +114,44 @@ function Platform(userName) {
         this.wv.executeJavaScript(betSize + this.scripts.setBetSize);
     };
 }
-function Settings(userName) {
-    this.mode;
-    this.calcFormula;
+function Settings() {
     this.schedule = new Table("schedule");
-    this.balanceBelow = 0;
-    this.balanceIncrease = 0;
-    this.balanceDecrease = 0;
-    this.lossesInRow = 0;
-    this.sameTrend;
-    this.pause = 0;
-    this.bettingStrategies;
-    function bind() {
 
-        var arr = document.querySelectorAll("input[name = calc]");
-        for (i = 0; i < arr.length; i++)
-            arr[i].onchange = function () {
-                if (this.checked)
-                    settings.calcFormula = this.id;
-            }
+    var arr = document.querySelectorAll("input[name = calc]");
+    for (i = 0; i < arr.length; i++)
+        arr[i].onchange = function () {
+            if (this.checked)
+                settings.calcFormula = this.id;
+        }
+    arr = document.querySelectorAll("input[name = mode]");
+    for (i = 0; i < arr.length; i++)
+        arr[i].onchange = function () {
+            if (this.checked)
+                settings.mode = this.id;
+        }
+    document.getElementById("pause").onchange = function () {
+        settings.pause = +this.value;
+    };
+    document.getElementById("balanceDecrease").onchange = function () {
+        settings.balanceDecrease = +this.value;
+    };
+    document.getElementById("balanceIncrease").onchange = function () {
+        settings.balanceIncrease = +this.value;
+    };
+    document.getElementById("percentBelow").onchange = function () {
+        settings.percentBelow = +this.value;
+    };
+    document.getElementById("lossesInRow").onchange = function () {
+        settings.lossesInRow = +this.value;
+    };
+    document.getElementById("sameTrend").onchange = function () {
+        settings.sameTrend = this.checked;
+    };
 
-        var arr = document.querySelectorAll("input[name = mode]");
-        for (i = 0; i < arr.length; i++)
-            arr[i].onchange = function () {
-                if (this.checked)
-                    settings.mode = this.id;
-            }
-
-        document.getElementById("pause").onchange = function () {
-            settings.pause = +this.value;
-        };
-        document.getElementById("balanceDecrease").onchange = function () {
-            settings.balanceDecrease = +this.value;
-        };
-        document.getElementById("balanceIncrease").onchange = function () {
-            settings.balanceIncrease = +this.value;
-        };
-        document.getElementById("percentBelow").onchange = function () {
-            settings.percentBelow = +this.value;
-        };
-        document.getElementById("lossesInRow").onchange = function () {
-            settings.lossesInRow = +this.value;
-        };
-        document.getElementById("sameTrend").onchange = function () {
-            settings.sameTrend = this.checked;
-        };
-    }
-    bind();
     this.refresh = function () {
         var arr = document.querySelectorAll("#settings *");
         for (i = 0; i < arr.length; i++) {
-            evt = document.createEvent("Event");
-            evt.initEvent("change", true, false);
-            arr[i].dispatchEvent(evt);
+            dispatchEvent("change", arr[i]);
         }
     };
     document.getElementById("set").addEventListener("click", function () {
@@ -184,79 +161,61 @@ function Settings(userName) {
         else
             style.display = "block"
     });
-    xhr("GET", "http://138.201.88.244/binopt/hs/v1/list/strategy?user=" + user.userName + "&sessionID=" + user.sessionID + "&broker=", function (list) {
-        fillList(list, document.getElementById("strategy"), this);
-    }.bind(this));
-    this.getStrategy = function () {
-        for (var i = 0; i < this.bettingStrategies.length; i++)
-            if (this.bettingStrategies[i].name == document.getElementById("strategy").value)
-                return this.bettingStrategies[i].value;
-    };
-    this.setList = function (list) {
-        this.bettingStrategies = list;
-    }
-}
-function Menu(userName) {
-    this.broker;
-    this.currency;
-    this.trend;
-    this.difference;
-
-    function fill() {
-        var currency = document.getElementById("currency");
-        var broker = document.getElementById("broker");
-        getList("http://138.201.88.244/binopt/hs/v1/list/broker?user=" + user.userName + "&sessionID=" + user.sessionID + "&broker=" + broker.textContent, broker);
-        getList("http://138.201.88.244/binopt/hs/v1/list/currency?user=" + user.userName + "&sessionID=" + user.sessionID + "&broker=" + broker.textContent, currency);
-    }
-    function getList(url, parent) {
-        let xhr = new XMLHttpRequest;
-        xhr.open("GET", url, true);
-        xhr.send();
-        xhr.onload = function () {
-            if (xhr.readyState != 4)
-                return;
-            if (xhr.status != 200) {
-                alert(xhr.status + ': ' + xhr.statusText);
-            } else {
-                let arr = JSON.parse(xhr.responseText);
-                arr.forEach(function (item, i, arr) {
-                    setOption(item, parent);
-                });
-
-                evt = document.createEvent("Event");
-                evt.initEvent("change", true, false);
-                parent.dispatchEvent(evt);
+    xhr("GET", "http://138.201.88.244/binopt/hs/v1/list/strategy?user=" + user.userName + "&sessionID=" + user.sessionID + "&broker=", list => {
+        let onEvent = {
+            type: "change",
+            event: "onchange",
+            func: function () {
+                settings.strategy = this.value;
             }
-        }
-    }
-    function setOption(option, parent) {
-        let elem = document.createElement('option');
-        elem.value = option.value;
-        elem.text = option.name;
-        parent.appendChild(elem);
-    }
-    function bind() {
-        document.getElementById("broker").onchange = function () {
-            menu.broker = this.value;
-            if (platform)
-                platform.refresh(this);
         };
-        document.getElementById("currency").onchange = function () {
-            menu.currency = this.value;
-        };
-        document.getElementById("trend").onchange = function () {
-            menu.trend = this.textContent;
-        };
-        document.getElementById("difference").onchange = function () {
-            menu.difference = this.value;
-        };
-    }
-    bind();
-    fill();
+        tuneList("strategy", list, onEvent);
+    });
+}
+function Menu() {
+    new Promise((resolve, reject) => {
+        xhr("GET", "http://138.201.88.244/binopt/hs/v1/list/broker?user=" + user.userName + "&sessionID=" + user.sessionID + "&broker=", list => {
+            let onEvent = {
+                type: "change",
+                event: "onchange",
+                func: function () {
+                    menu.broker = this.textContent;
+                    if (platform)
+                        platform.refresh(this);
+                    resolve();
+                }
+            };
+            tuneList("broker", list, onEvent);
+        })
+    }).then(()=> {
+        xhr("GET", "http://138.201.88.244/binopt/hs/v1/list/currency?user=" + user.userName + "&sessionID=" + user.sessionID + "&broker=" + this.broker, list => {
+            let onEvent = {
+                type: "change",
+                event: "onchange",
+                func: function () {
+                    menu.currency = this.value;
+                }
+            };
+            tuneList("currency", list, onEvent);
+        });
+    });
+
+    document.getElementById("trend").onchange = function () {
+        menu.trend = this.textContent;
+    };
+    document.getElementById("difference").onchange = function () {
+        menu.difference = this.value;
+    };
 }
 function Autotrading() {
     this.data = {
-        startingBalance: 0, startingBetSize: 0, lostBets: 0, sumOfBets: 0, balanceBeforeBet: 0, balanceAfterBet: 0, trend: undefined
+        startingBalance: 0,
+        startingBetSize: 0,
+        lostBets: 0,
+        sumOfBets: 0,
+        balanceBeforeBet: 0,
+        balanceAfterBet: 0,
+        trend: undefined
     };
     this.firstTime = true;
     this.start = function () {
@@ -344,15 +303,15 @@ function Autotrading() {
         this.firstTime = true;
     };
     function calculateBetSize() {
-        var code = settings.getStrategy();
+        var code = settings.strategy;
         return code.replace("sumOfBets", autoTrading.data.sumOfBets).replace("percent", platform.data.percent).replace("startingBetSize", autoTrading.data.startingBetSize);
     }
 }
 function Table(id) {
     this.headers = [];
     headersColl = document.getElementById(id).rows[0].cells;
-   for (var i = 0; i < headersColl.length; i++)
-            this.headers.push(headersColl[i].textContent);
+    for (var i = 0; i < headersColl.length; i++)
+        this.headers.push(headersColl[i].textContent);
 
     this.currentRow = 0;
     this.add = function () {
@@ -386,11 +345,91 @@ function Table(id) {
     document.getElementById("addRow").addEventListener("click", this.add.bind(this), false);
     document.getElementById("delRow").addEventListener("click", this.delete.bind(this), false);
 }
+function User() {
+    this.userName;
+    this.pass;
+    this.sessionID;
+    this.plan;
+    document.getElementById("login").addEventListener("click", () => {
+        var hashObj = new jsSHA("SHA-1", "TEXT", {numRounds: 1});
+        hashObj.update(document.getElementById("password").value);
+        this.pass = hashObj.getHash("B64");
 
+        xhr("GET", "http://138.201.88.244/binopt/hs/v1/auth?user=" + document.getElementById("username").value + "&password=" + this.pass, function (obj) {
+            if (obj.sessionID) {
+                user.sessionID = obj.sessionID;
+                user.userName = document.getElementById("username").value;
+                document.getElementById("modal").style.display = "none";
+                menu = new Menu();
+                platform = new Platform();
+                settings = new Settings();
+                trading = new Trading();
+                document.getElementById("start").addEventListener("click", trading.clickButton.bind(trading), false);
+                autoTrading = new Autotrading();
+            }
+        })
+    })
+}
+function Bet(trend) {
+    this.request = {
+        data: {
+            betSize: undefined,
+            balanceBeforeBet: undefined,
+            balanceAfterBet: undefined,
+            trend: undefined,
+            percent: undefined,
+            user: undefined,
+            currency: undefined,
+            mode: undefined,
+            result: undefined,
+            commission: undefined
+        },
+        signature: undefined
+    };
+    platform.getData(function () {
+        this.request.data.balanceBeforeBet = platform.data.balance;
+        this.request.data.percent = platform.data.percent;
+        this.request.data.betSize = platform.data.betSize;
+    }.bind(this));
+    this.request.data.trend = trend;
+    this.request.data.user = user.userName;
+    this.request.data.currency = menu.currency;
+    this.request.data.mode = settings.mode;
+
+    this.finish = function () {
+        platform.getData(function () {
+            this.request.data.balanceAfterBet = platform.data.balance;
+            this.request.data.result = this.request.data.balanceAfterBet - this.request.data.balanceBeforeBet;
+            this.request.data.comission = this.request.data.result * 0.3;
+            var sign = user.userName + user.sessionID + JSON.stringify(this.request.data) + user.pass;
+            var hashObj = new jsSHA("SHA-1", "TEXT", {numRounds: 1});
+            hashObj.update(sign);
+            this.request.signature = hashObj.getHash("B64");
+
+            xhr("POST", "http://138.201.88.244/binopt/hs/v1/doc/bet?user=" + user.userName + "&sessionID=" + user.sessionID, function () {
+            }, JSON.stringify(this.request));
+
+            if (settings.mode == "auto")
+                platform.getData(autoTrading.continue);
+        }.bind(this))
+    }
+}
+
+function dispatchEvent(eventType, elem) {
+    let evt = document.createEvent("Event");
+    evt.initEvent(eventType, true, false);
+    elem.dispatchEvent(evt);
+}
+function tuneList(elemName, list, onEvent) {
+    let elem = document.getElementById(elemName);
+    fillList(list, elem);
+    elem[onEvent.event] = onEvent.func;
+    dispatchEvent(onEvent.type, elem);
+}
 function xhr(method, url, callback, body) {
     let xhr = new XMLHttpRequest;
     xhr.open(method, url, true);
-    if(method == "GET")
+    if (method == "GET")
         xhr.send();
     else if (method == "POST")
         xhr.send(body);
@@ -407,82 +446,13 @@ function xhr(method, url, callback, body) {
 }
 function addOption(option, parent) {
     let elem = document.createElement('option');
-    elem.text = option;
+    elem.value = option.value;
+    elem.text = option.name;
     parent.appendChild(elem);
 }
-function fillList(list, parent, obj) {
-    obj.setList(list);
+function fillList(list, parent) {
+    //obj.setList(list);
     list.forEach(function (item, i, arr) {
-        addOption(item.name, parent);
+        addOption(item, parent);
     });
-}
-
-function User() {
-    this.userName;
-    this.pass;
-    this.sessionID;
-    this.plan;
-    document.getElementById("login").addEventListener("click", function () {
-        var hashObj = new jsSHA("SHA-1","TEXT",{ numRounds: 1 });
-        hashObj.update(document.getElementById("password").value);
-        this.pass = hashObj.getHash("B64");
-
-        xhr("GET", "http://138.201.88.244/binopt/hs/v1/auth?user=" + document.getElementById("username").value + "&password=" + this.pass, function (obj) {
-            if (obj.sessionID) {
-                user.sessionID = obj.sessionID;
-                user.userName = document.getElementById("username").value;
-                document.getElementById("modal").style.display = "none";
-                menu = new Menu();
-                platform = new Platform();
-                platform.findPlatformElement();
-                settings = new Settings();
-                trading = new Trading();
-                document.getElementById("start").addEventListener("click", trading.clickButton.bind(trading), false);
-                autoTrading = new Autotrading();
-            }
-        })
-    }.bind(this))
-}
-
-function Bet(trend) {
-    this.request = {
-        data: {
-            betSize: undefined,
-            balanceBeforeBet: undefined,
-            balanceAfterBet: undefined,
-            trend: undefined,
-            percent: undefined,
-            user: undefined,
-            currency: undefined,
-            mode: undefined,
-            result: undefined,
-            commission: undefined
-        },
-        signature:undefined};
-    platform.getData(function () {
-        this.request.data.balanceBeforeBet = platform.data.balance;
-        this.request.data.percent = platform.data.percent;
-        this.request.data.betSize = platform.data.betSize;
-    }.bind(this));
-    this.request.data.trend = trend;
-    this.request.data.user = user.userName;
-    this.request.data.currency = menu.currency;
-    this.request.data.mode = settings.mode;
-    
-    this.finish = function () {
-        platform.getData(function () {
-            this.request.data.balanceAfterBet = platform.data.balance;
-            this.request.data.result = this.request.data.balanceAfterBet - this.request.data.balanceBeforeBet;
-            this.request.data.comission = this.request.data.result * 0.3;
-            var sign = user.userName + user.sessionID + JSON.stringify(this.request.data) + user.pass;
-            var hashObj = new jsSHA("SHA-1", "TEXT", { numRounds: 1 });
-            hashObj.update(sign);
-            this.request.signature = hashObj.getHash("B64");
-
-            xhr("POST", "http://138.201.88.244/binopt/hs/v1/doc/bet?user=" + user.userName + "&sessionID=" + user.sessionID, function () { }, JSON.stringify(this.request));
-
-            if (settings.mode == "auto")
-                platform.getData(autoTrading.continue);
-        }.bind(this))
-    }
 }
